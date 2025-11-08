@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PUTRA AI</title>
+<style>
+body { margin:0; font-family:'Segoe UI',sans-serif; background:linear-gradient(180deg,#0d0d0d 0%,#1a0d2c 100%); color:#fff; min-height:100vh; padding-bottom:90px; overflow-y:auto;}
+#auroraCanvas { position:fixed; top:0; left:0; width:100%; height:100%; z-index:0;}
+header { z-index:10; background:rgba(255,0,0,0.2); color:#ff1a1a; padding:15px; text-align:center; font-size:1.8rem; font-weight:bold; text-shadow:0 0 10px #ff1a1a,0 0 20px #ff1a1a; backdrop-filter:blur(10px);}
+#chatContainer { z-index:10; padding:20px; display:flex; flex-direction:column; gap:12px; max-width:800px; margin:0 auto;}
+#chatContainer::-webkit-scrollbar {display:none;}
+.message { max-width:70%; padding:12px 18px; border-radius:18px; word-wrap:break-word; line-height:1.4; opacity:0; transform:translateY(20px); animation:fadeIn 0.3s forwards; backdrop-filter:blur(6px);}
+.user { align-self:flex-end; background:rgba(255,0,0,0.2); color:#ff1a1a; border-bottom-right-radius:0; text-shadow:0 0 5px #ff1a1a; box-shadow:0 0 10px rgba(255,26,26,0.5);}
+.ai { align-self:flex-start; background:rgba(255,255,255,0.05); color:#fff; border-bottom-left-radius:0; text-shadow:0 0 5px #ff1a1a; box-shadow:0 0 15px rgba(255,26,26,0.6),0 0 25px rgba(255,26,26,0.4),0 0 50px rgba(255,26,26,0.2);}
+.typing { font-style:italic; color:#aaa; animation:pulse 1s infinite alternate;}
+@keyframes fadeIn { to { opacity:1; transform:translateY(0); } }
+@keyframes pulse { from {opacity:0.6; transform:scale(0.98);} to {opacity:1; transform:scale(1.02);} }
+#inputContainer { position:fixed; bottom:0; left:0; width:100%; display:flex; padding:12px 20px; gap:10px; background:rgba(0,0,0,0.6); backdrop-filter:blur(12px); box-sizing:border-box; z-index:10;}
+#userInput { flex:1; padding:12px 18px; border-radius:25px; border:none; font-size:16px; outline:none; background:rgba(255,255,255,0.05); color:#fff; resize:none; height:45px; max-height:150px; overflow-y:hidden; transition:0.2s;}
+#userInput:focus { box-shadow:0 0 10px #ff1a1a,0 0 20px #ff1a1a inset; background:rgba(255,0,0,0.05);}
+#sendBtn { width:50px; height:50px; border-radius:50%; border:none; font-size:18px; background:#ff1a1a; color:#000; cursor:pointer; box-shadow:0 0 15px #ff1a1a; transition:0.2s;}
+#sendBtn:hover { box-shadow:0 0 25px #ff1a1a; }
+.contactBtn { display:inline-block; margin:5px 0; padding:10px 18px; border-radius:25px; background:#ff1a1a; color:#000; text-decoration:none; font-weight:bold; transition:0.3s; box-shadow:0 0 10px #ff1a1a;}
+.contactBtn:hover { transform:scale(1.05); box-shadow:0 0 20px #ff1a1a;}
+</style>
+</head>
+<body>
+
+<canvas id="auroraCanvas"></canvas>
+<header>PUTRA AI</header>
+<div id="chatContainer"></div>
+<div id="inputContainer">
+  <textarea id="userInput" placeholder="Tulis pertanyaanmu di sini... santai aja 😎"></textarea>
+  <button id="sendBtn">&#9658;</button>
+</div>
+
+<script>
+// ===== AURORA =====
+const canvas=document.getElementById("auroraCanvas"),ctx=canvas.getContext("2d");
+canvas.width=window.innerWidth; canvas.height=window.innerHeight;
+let particleCount=Math.floor(canvas.width*canvas.height/8000),particles=[];
+function initParticles(){particles=[];for(let i=0;i<particleCount;i++){particles.push({x:Math.random()*canvas.width,y:Math.random()*canvas.height,size:Math.random()*3+1,speedX:(Math.random()-0.5)*2,speedY:(Math.random()-0.5)*2,color:`hsl(${Math.random()*360},100%,50%)`,alpha:Math.random()*0.5+0.2});}}
+initParticles();
+function animateAurora(){ctx.clearRect(0,0,canvas.width,canvas.height);particles.forEach(p=>{ctx.fillStyle=p.color; ctx.globalAlpha=p.alpha; ctx.shadowBlur=10; ctx.shadowColor=p.color; ctx.beginPath(); ctx.arc(p.x,p.y,p.size,0,Math.PI*2); ctx.fill(); p.x+=p.speedX; p.y+=p.speedY; if(p.x<0)p.x=canvas.width;if(p.x>canvas.width)p.x=0;if(p.y<0)p.y=canvas.height;if(p.y>canvas.height)p.y=0;});requestAnimationFrame(animateAurora);}
+animateAurora();
+window.addEventListener("resize",()=>{canvas.width=window.innerWidth;canvas.height=window.innerHeight;particleCount=Math.floor(canvas.width*canvas.height/8000);initParticles();});
+
+// ===== CHAT SYSTEM =====
+const chatContainer=document.getElementById("chatContainer"),userInput=document.getElementById("userInput"),sendBtn=document.getElementById("sendBtn");
+
+const greeting=`🌈 Yo, halo bossku! 👋<br><br>
+Aku <b>PUTRA AI</b> 🤖 — asisten virtual paling chill 😎<br><br>
+Mau nanya tugas, curhat, atau iseng? Gas aja, aku siap 24/7 🧠🔥<br><br>
+Ketik di bawah:<br>
+- /pulihkanpertanyaan → lihat pertanyaan lama<br>
+- /clearpertanyaan → hapus semua pertanyaan<br>
+- /infodeveloper → info developer<br>
+- /contactdeveloper → kontak developer`;
+setTimeout(()=>addMessage(greeting,"ai",false),800);
+
+function scrollToBottom(){window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'});}
+function addMessage(content,sender,save=true){const div=document.createElement("div");div.classList.add("message",sender);div.innerHTML=content;chatContainer.appendChild(div);scrollToBottom();if(save){let history=JSON.parse(localStorage.getItem("putraAIHistory"))||[];history.push({content,sender});if(history.length>50)history.shift();localStorage.setItem("putraAIHistory",JSON.stringify(history));}}
+
+// ===== ASK AI VIA SERVER =====
+async function askAI(message){
+  if(message==="/pulihkanpertanyaan") return restoreHistory();
+  if(message==="/clearpertanyaan"){localStorage.removeItem("putraAIHistory");addMessage("🗑️ Semua pertanyaan tersimpan sudah dihapus, bro 😎","ai");return;}
+  if(message==="/infodeveloper"){addMessage("😎 Website ini dibuat oleh <b>Putra Laksana</b> — bocah jenius umur 14 tahun dari Indonesia 🇮🇩🔥","ai");return;}
+  if(message==="/contactdeveloper"){addMessage(`📬 Yo bro! Mau kontak developer PUTRA AI? Santai aja 😎<br><br>
+<a href="https://wa.me/6285169822303" target="_blank" class="contactBtn">WhatsApp: 085169822303</a><br>
+<a href="mailto:seymavalk@gmail.com" class="contactBtn">Email: seymavalk@gmail.com</a><br><br>
+Klik tombol di atas untuk langsung kontak. Enjoy chat-nya bro! 🌈🔥`,"ai");return;}
+
+  const typingDiv=document.createElement("div");typingDiv.classList.add("message","ai","typing");chatContainer.appendChild(typingDiv);
+  const typingVariants=["💭 PUTRA AI lagi mikir sambil ngopi ☕...","🧠 PUTRA AI nyari jawaban yang gokil nih...","⌛ Sabar ya bro, PUTRA AI lagi loading ide saking kerennya...","😎 PUTRA AI lagi chill sambil nyusun kata...","🤔 Hmm... PUTRA AI lagi mikirin joke biar seru...","🌀 PUTRA AI lagi nyari referensi meme dunia...","🔥 Jangan buru-buru, PUTRA AI lagi mikir sambil nge-jam...","🌈 PUTRA AI lagi atur vibe jawaban biar kece badai..."];
+  let i=0; const typingInterval=setInterval(()=>{typingDiv.textContent=typingVariants[i%typingVariants.length];i++;scrollToBottom();},500);
+
+  try {
+    const res=await fetch('/ask',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message})});
+    const data=await res.json();
+    clearInterval(typingInterval);
+    const aiText=data.choices[0].message.content.trim();
+    typingDiv.textContent=""; let idx=0;
+    const slowTyping=setInterval(()=>{typingDiv.textContent+=aiText[idx];idx++;scrollToBottom();if(idx>=aiText.length)clearInterval(slowTyping);},30);
+  } catch(err){clearInterval(typingInterval);typingDiv.textContent="⚠️ Waduh, ada error nih: "+err;scrollToBottom();}
+}
+
+function restoreHistory(){const history=JSON.parse(localStorage.getItem("putraAIHistory"))||[];if(history.length===0)addMessage("Belum ada riwayat obrolan, bro 😅","ai");else history.forEach(h=>addMessage(`${h.content}`,h.sender,false));}
+
+sendBtn.addEventListener("click",()=>{const message=userInput.value.trim();if(!message)return;addMessage(message,"user");userInput.value="";askAI(message);});
+userInput.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendBtn.click();}});
+userInput.addEventListener("input",()=>{userInput.style.height="auto";userInput.style.height=userInput.scrollHeight+"px";});
+</script>
+</body>
+</html>
